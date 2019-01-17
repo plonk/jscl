@@ -485,4 +485,21 @@
          (list-to-vector (%remove-duplicates (vector-to-list seq) from-end test test-not key start end)))
         (t (error "Its not sequence ~a" seq))))
 
-
+(defun concatenate (result-type &rest sequences)
+  (flet ((as-new-list (seq)
+           (etypecase seq
+             (vector (vector-to-list seq))
+             (list (copy-list seq)))))
+    (case result-type
+      (list
+       (if sequences
+           (nconc (as-new-list (car sequences))
+                  (apply #'concatenate 'list (cdr sequences)))
+           nil))
+      (vector
+       (list-to-vector (apply #'concatenate 'list sequences)))
+      (string
+       (let* ((v (apply #'concatenate 'vector sequences))
+              (s (make-array (length v) :element-type 'character)))
+         (dotimes (i (length v) s)
+           (setf (aref s i) (aref v i))))))))
