@@ -21,7 +21,40 @@
       'character
       t))
 
-(defun make-array (dimensions &key element-type initial-element adjustable fill-pointer)
+(defun check-dimensions (contents dimensions)
+  (when dimensions
+    (unless (or (vectorp contents) (listp contents))
+       (error "not a sequence"))
+    (unless (= (length contents) (car dimensions))
+      (error "dimension mismatch"))
+
+    (cond
+      ((vectorp contents)
+       (dotimes (i (length contents))
+         (check-dimensions (aref contents i) (cdr dimensions))))
+      ((listp contents)
+       (dolist (elt contents)
+         (check-dimensions elt (cdr dimensions)))))))
+
+(defun assign-contents (array start contents dimensions)
+  (if dimensions
+      (cond
+        ((vectorp contents)
+         (dotimes (n (car dimensions))
+           (setf start
+                 (assign-contents array start (aref contents n) (cdr dimensions))))
+         start)
+        ((listp contents)
+         (dolist (elt contents)
+           (setf start
+                 (assign-contents array start elt (cdr dimensions))))
+         start)
+        (t (error "ASSIGN-CONTENTS: Not a sequence")))
+      (progn
+        (storage-vector-set array start contents)
+        (1+ start))))
+
+(defun make-array (dimensions &key element-type initial-element initial-contents adjustable fill-pointer)
   (let* ((dimensions (ensure-list dimensions))
          (size (!reduce #'* dimensions 1))
          (array (make-storage-vector size)))
@@ -39,7 +72,11 @@
       (error "FILL-POINTER cannot be specified on multidimensional arrays."))
 
     ;; Initialize array
-    (storage-vector-fill array initial-element)
+    (if initial-contents
+        (progn
+          (check-dimensions initial-contents dimensions)
+          (assign-contents array 0 initial-contents dimensions))
+        (storage-vector-fill array initial-element))
     ;; Record and return the object
     (setf (oget array "type") element-type)
     (setf (oget array "dimensions") dimensions)
@@ -64,32 +101,78 @@
 (defun array-dimensions (array)
   (unless (arrayp array)
     (error "~S is not an array." array))
-  (oget array "dimensions"))
+
+  (if ((oget array "hasOwnProperty") "dimensions")
+      (oget array "dimensions")
+      (list (storage-vector-size array))))
 
 ;; TODO: Error checking
 (defun array-dimension (array axis)
   (nth axis (array-dimensions array)))
 
-(defun aref (array index)
+(defun array-row-major-index (array &rest subscripts)
   (unless (arrayp array)
-    (error "~S is not an array." array))  
-  (storage-vector-ref array index))
+    (error "~S is not an array." array))
+  (unless (apply #'array-in-bounds-p array subscripts)
+    (error "Out of bounds"))
 
-(defun aset (array index value)
+  (apply #'+ (maplist #'(lambda (x y)
+                          (* (car x) (apply #'* (cdr y))))
+                      subscripts
+                      (array-dimensions array))))
+
+(defun array-rank (array)
+  (length (array-dimensions array)))
+
+(defun array-total-size (array)
   (unless (arrayp array)
-    (error "~S is not an array." array))  
-  (storage-vector-set array index value))
+    (error "~S is not an array." array))
 
-(define-setf-expander aref (array index)
+  (storage-vector-size array))
+
+(defun array-in-bounds-p (array &rest subscripts)
+  (unless (arrayp array)
+    (error "~S is not an array." array))
+
+  (if (= 1 (array-rank array))
+      (progn
+        (unless (= 1 (length subscripts))
+          (error "number of subscripts not 1"))
+        (and (integerp (car subscripts))
+             (not (minusp (car subscripts)))
+             (< (car subscripts) (storage-vector-size array))))
+
+      (progn
+        (unless (= (length subscripts) (array-rank array))
+          (error "Got ~S subscripts for rank ~S array"
+                 (length subscripts) (array-rank array)))
+        (every (lambda (i n)
+                 (and (integerp i) (not (minusp i)) (< i n)))
+               #'< subscripts (array-dimensions array)))))
+
+(defun aref (array &rest indices)
+  (unless (arrayp array)
+    (error "~S is not an array." array))
+
+  (storage-vector-ref array (apply #'array-row-major-index array indices)))
+
+(defun aset (array &rest rest)
+  (unless (arrayp array)
+    (error "~S is not an array." array))
+
+  (storage-vector-set array
+                      (apply #'array-row-major-index array (butlast rest))
+                      (car (last rest))))
+
+(define-setf-expander aref (array &rest indices)
   (let ((g!array (gensym))
-        (g!index (gensym))
+        (g!indices (gensym))
         (g!value (gensym)))
-    (values (list g!array g!index)
-            (list array index)
+    (values (list g!array g!indices)
+            (list array (cons 'list indices))
             (list g!value)
-            `(aset ,g!array ,g!index ,g!value)
-            `(aref ,g!array ,g!index))))
-
+            `(aset ,array ,@indices ,g!value)
+            `(aref ,array ,@indices))))
 
 (defun array-has-fill-pointer-p (array)
   (and (oget array "fillpointer") t))
