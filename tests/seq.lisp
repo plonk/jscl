@@ -288,5 +288,25 @@
                              :test #'char-equal :key #'cadr :from-end t) '((FOO #\a) (BAR #\%))))
   (list t t t t t)))
 
-
-
+;; CONCATENATE
+(test (null (concatenate 'list)))
+(test (null (concatenate 'list '())))
+(test (null (concatenate 'list #())))
+(test (let ((v (concatenate 'vector)))
+        (and (vectorp v) (zerop (length v)))))
+(test (let ((v (concatenate 'vector '())))
+        (and (vectorp v) (zerop (length v)))))
+(test (let ((v (concatenate 'vector #())))
+        (and (vectorp v) (zerop (length v)))))
+(test (string= "" (concatenate 'string)))
+(test (string= "" (concatenate 'string '())))
+(test (string= "" (concatenate 'string #())))
+(test (string= "" (concatenate 'string "")))
+(test (equal '(1 2 3) (concatenate 'list #(1 2) '(3))))
+(test (let ((v (concatenate 'vector #(1 2) '(3))))
+        (and (vectorp v)
+             (= 3 (length v))
+             (eql 1 (aref v 0))
+             (eql 2 (aref v 1))
+             (eql 3 (aref v 2)))))
+(test (string= "123" (concatenate 'string #(#\1) "2" '(#\3))))
