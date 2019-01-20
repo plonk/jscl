@@ -25,6 +25,7 @@
 (defvar *standard-input*)
 
 (def!struct (stream (:predicate streamp))
+  position-fn
   write-fn
   read-char-fn
   peek-char-fn
@@ -46,6 +47,7 @@
                 nil))))
 
       (make-stream
+       :position-fn (lambda () index)
        :read-char-fn (lambda (eof-error-p)
                        (prog1 (peek eof-error-p)
                          (incf index)))
@@ -73,6 +75,7 @@
 (defun make-string-output-stream ()
   (let ((buffer (make-array 0 :element-type 'character :fill-pointer 0)))
     (make-stream
+     :position-fn (lambda () (length buffer))
      :write-fn (lambda (string)
        (dotimes (i (length string))
          (vector-push-extend (aref string i) buffer)))
@@ -92,3 +95,7 @@
   `(let ((,var (make-string-output-stream)))
      ,@body
      (get-output-stream-string ,var)))
+
+(defun file-position (stream)
+  (funcall (stream-position-fn stream)))
+

@@ -588,7 +588,9 @@
 (fset 'read #'ls-read)
 
 (defun ls-read-from-string (string &optional (eof-error-p t) eof-value)
-  (ls-read (make-string-input-stream string) eof-error-p eof-value))
+  (let* ((stream (make-string-input-stream string))
+         (exp (ls-read stream eof-error-p eof-value)))
+    (values exp (file-position stream))))
 
 #+jscl
 (fset 'read-from-string #'ls-read-from-string)

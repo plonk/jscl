@@ -15,6 +15,10 @@
 
 (defvar *rl*)
 
+(defun strcat (s1 s2)
+  (with-output-to-string (stream)
+    (format stream "~A~A" s1 s2)))
+
 (defun node-init ()
   (setq *standard-output*
         (make-stream
@@ -22,22 +26,37 @@
                      (#j:process:stdout:write string))))
   (setq *rl* (#j:readline:createInterface #j:process:stdin #j:process:stdout))
   (welcome-message)
-  (let ((*root* *rl*))
-    (#j:setPrompt "CL-USER> ")
+  (let ((*root* *rl*)
+        (input ""))
+    (#j:setPrompt (format nil "~A> " (package-name *package*)))
     (#j:prompt)
     (#j:on "line"
            (lambda (line)
              (%js-try
               (progn
                 (handler-case
-                    (let ((results (multiple-value-list
-                                    (eval-interactive (read-from-string line)))))
-                      (dolist (result results)
-                        (print result)))
+                    (progn
+                      (setq input (strcat (strcat input line) "
+"))
+                      (loop
+                         (multiple-value-bind
+                               (exp nextpos)
+                             (read-from-string input)
+                           (let ((results (multiple-value-list
+                                           (eval-interactive exp))))
+                             (dolist (result results)
+                               (print result)))
+                           (setq input (subseq input nextpos)))))
                   (error (err)
-                    (format t "ERROR: ")
-                    (apply #'format t (!condition-args err))
-                    (terpri))))
+                    (let ((args (!condition-args err)))
+                      (cond
+                        ((equal args '("End of file")) nil)
+                        ((equal args '("Unexpected EOF")))
+                        (t (progn
+                             (setq input "")
+                             (format t "ERROR: ")
+                             (apply #'format t args)
+                             (terpri))))))))
               (catch (err)
                 (let ((message (or (oget err "message") err)))
                   (format t "ERROR[!]: ~a~%" message))))
