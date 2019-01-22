@@ -322,6 +322,10 @@
   (if (find :node *features*)
       (funcall (%js-vref "require") name)))
 
+(setq *compile-file-pathname* nil)
+(setq *compile-file-truename* nil)
+(setq *load-pathname* nil)
+(setq *load-truename* nil)
 
 (when (jscl::web-worker-p)
   (jscl::initialize-web-worker))
