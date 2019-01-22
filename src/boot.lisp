@@ -380,6 +380,24 @@
      (and (stringp y) (string= x y)))
     (t nil)))
 
+(defun equalp (x y)
+  (cond
+    ((eql x y) t)
+    ((characterp x)
+     (and (characterp y)
+          (char-equal x y)))
+    ((numberp x)
+     (and (numberp y) (= x y)))
+    ((consp x)
+     (and (consp y)
+          (equalp (car x) (car y))
+          (equalp (cdr x) (cdr y))))
+    ((vectorp x)
+     (and (vectorp y)
+          (= (length x) (length y))
+          (every #'equalp x y)))
+    (t nil)))
+
 (defun fdefinition (x)
   (cond
     ((functionp x)
