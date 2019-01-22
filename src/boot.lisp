@@ -135,6 +135,15 @@
                    `(,g!getter ,@arguments)))))))
         (t (error "defun ~a unknow function specifier" name))))
 
+(defmacro truly-the (type exp)
+  `(the ,type ,exp))
+
+(defmacro locally (&body body)
+  `(progn ,@body))
+
+(defmacro declare (&body stuff)
+  nil)
+
 (defmacro return (&optional value)
   `(return-from nil ,value))
 
