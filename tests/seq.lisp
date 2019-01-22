@@ -310,3 +310,55 @@
              (eql 2 (aref v 1))
              (eql 3 (aref v 2)))))
 (test (string= "123" (concatenate 'string #(#\1) "2" '(#\3))))
+
+;; MERGE
+(test (equal '() (merge 'list '() '() #'<)))
+(test (equal '(1 2 3) (merge 'list '(1) '(2 3) #'<)))
+(test (equal '(3 2 1) (merge 'list '(1) '(3 2) #'>)))
+(test (equal '(1 1 1) (merge 'list '(1) '(1 1) #'<)))
+
+;; FILL
+(test (equal '(1 1 1) (fill (list nil nil nil) 1)))
+(test (equal '(nil 1 1) (fill (list nil nil nil) 1 :start 1)))
+(test (equal '(1 1 nil) (fill (list nil nil nil) 1 :start 0 :end 2)))
+
+;; NSUBSTITUTE
+(test (equalp #(10 2 3) (nsubstitute 10 1 #(1 2 3))))
+
+;; NSUBSTITUTE-IF
+(test (equalp #(10 2 3) (nsubstitute-if 10 (lambda (x) (= x 1))  #(1 2 3))))
+
+;; NSUBSTITUTE-IF-NOT
+(test (equalp #(1 10 10) (nsubstitute-if-not 10 (lambda (x) (= x 1)) #(1 2 3))))
+
+;; SUBSTITUTE
+(test (equalp #(10 2 3) (substitute 10 1 #(1 2 3))))
+
+;; SUBSTITUTE-IF
+(test (equalp #(10 2 3) (substitute-if 10 (lambda (x) (= x 1))  #(1 2 3))))
+
+;; SUBSTITUTE-IF-NOT
+(test (equalp #(1 10 10) (substitute-if-not 10 (lambda (x) (= x 1)) #(1 2 3))))
+
+;; MAP-INTO
+(let ((a (list 1 2 3 4))
+      (b (list 10 10 10 10)))
+  (test (equal '(11 12 13 14) (map-into a #'+ a b)))
+  (test (equal '(11 12 13 14) a)))
+
+;; FIND-IF-NOT
+(test (= 2 (find-if-not #'oddp '(1 2 3))))
+
+;; DELETE
+(test (not (find 1 (delete 1 #(1 2 3 1)))))
+
+;; DELETE-IF
+(test (equal (delete-if     #'zerop '(1 0 2 0 3)) '(1 2 3)))
+
+;; DELETE-IF-NOT
+(test (equal (delete-if-not #'zerop '(1 0 2 0 3)) '(0 0)))
+
+;; DELETE-DUPLICATES
+(equal (delete-duplicates "aBcDAbCd" :test #'char-equal :from-end t) "aBcD")
+(equal (delete-duplicates "aBcDAbCd" :test #'char-equal) "AbCd")
+(equal (delete-duplicates (list 'a 'a 'a 'a)) '(a))
