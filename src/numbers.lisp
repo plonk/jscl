@@ -144,3 +144,6 @@
 	 (lcm-2 (first integers) (second integers)))
 	(t
 	 (apply #'lcm (lcm (first integers) (second integers)) (nthcdr 2 integers)))))
+
+(defun ash (integer count)
+  (values (floor (* integer (expt 2 count)))))
