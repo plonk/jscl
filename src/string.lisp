@@ -237,3 +237,19 @@
     (dotimes (i n "")
       (when (not (find (char string (- n i 1)) character-bag))
         (return-from string-right-trim (subseq string 0 (- n i)))))))
+
+(defun schar (string index)
+  (unless (and (not (minusp index))
+           (< index (length string)))
+    (error "Out of range"))
+  (aref string index))
+
+;; TODO: Setter must respect the fill pointer.
+(define-setf-expander schar (string index)
+  (let ((g!value (gensym)))
+    (values '()
+            '()
+            (list g!value)
+            `(setf (aref ,string ,index) ,g!value)
+            `(aref ,string ,index))))
+

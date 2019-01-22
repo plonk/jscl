@@ -655,3 +655,10 @@
 ;; (test (subtypep (upgraded-array-element-type
 ;;         (array-element-type (make-string 3 :element-type 'standard-char)))
 ;;        'character))
+
+
+
+(let ((s (make-string 2 :initial-element #\A)))
+  (test (char= (schar s 0) #\A))
+  (test (char= (setf (schar s 1) #\B) #\B))
+  (test (string= "AB" s)))
