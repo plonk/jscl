@@ -315,6 +315,33 @@
          (error "The index ~D is too large for ~A of length ~D." index 'vector length))
        (aref sequence index)))))
 
+(defun set-elt (sequence index value)
+  (when (< index 0)
+    (error "The index ~D is below zero." index))
+  (etypecase sequence
+    (list
+     (let ((i 0))
+       (maplist (lambda (tail) ; should be MAPL
+                  (when (= i index)
+                    (setf (car tail) value)
+                    (return-from set-elt value))
+                  (incf i))
+                sequence)
+       (error "The index ~D is too large for ~A of length ~D." index 'list i)))
+    (array
+     (let ((length (length sequence)))
+       (when (>= index length)
+         (error "The index ~D is too large for ~A of length ~D." index 'vector length))
+       (setf (aref sequence index) value)))))
+
+(define-setf-expander elt (array index)
+  (let ((g!value (gensym)))
+    (values '()
+            '()
+            (list g!value)
+            `(set-elt ,array ,index ,g!value)
+            `(elt ,array ,index))))
+
 (defun zero-args-reduce (function initial-value initial-value-p)
   (if initial-value-p
       (funcall function initial-value)
