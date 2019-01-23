@@ -15,10 +15,6 @@
 
 (defvar *rl*)
 
-(defun strcat (s1 s2)
-  (with-output-to-string (stream)
-    (format stream "~A~A" s1 s2)))
-
 (defun node-init ()
   (setq *standard-output*
         (make-stream
@@ -36,7 +32,7 @@
               (progn
                 (handler-case
                     (progn
-                      (setq input (strcat (strcat input line) "
+                      (setq input (concatenate 'string input line "
 "))
                       (loop
                          (multiple-value-bind
@@ -61,7 +57,12 @@
                 (let ((message (or (oget err "message") err)))
                   (format t "ERROR[!]: ~a~%" message))))
              ;; Continue
-             ((oget *rl* "prompt"))))))
+             (let ((*root* *rl*))
+               (if (every #'jscl::whitespacep input)
+                   (#j:setPrompt (format nil "~A> " (package-name *package*)))
+                   (#j:setPrompt ""))
+               (#j:prompt))
+             ))))
 
 
 (node-init)
