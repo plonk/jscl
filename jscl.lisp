@@ -99,6 +99,7 @@
      ("exports"       :target)
      ("methods"       :target)
      ("describe"      :target))
+    ("pathname"      :target)
     ("load"          :target)))
 
 
