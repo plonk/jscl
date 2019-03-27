@@ -127,20 +127,20 @@
   (count-if (complement predicate) sequence :from-end from-end
             :start start :end end :key key))
 
-(defun find (item seq &key key (test #'eql testp) (test-not #'eql test-not-p))
-  (do-sequence (x seq)
-    (when (satisfies-test-p item x :key key :test test :testp testp
-                            :test-not test-not :test-not-p test-not-p)
-      (return x))))
+;; (defun find (item seq &key key (test #'eql testp) (test-not #'eql test-not-p))
+;;   (do-sequence (x seq)
+;;     (when (satisfies-test-p item x :key key :test test :testp testp
+;;                             :test-not test-not :test-not-p test-not-p)
+;;       (return x))))
 
-(defun find-if (predicate sequence &key key)
-  (if key
-      (do-sequence (x sequence)
-        (when (funcall predicate (funcall key x))
-          (return x)))
-      (do-sequence (x sequence)
-        (when (funcall predicate x)
-          (return x)))))
+;; (defun find-if (predicate sequence &key key)
+;;   (if key
+;;       (do-sequence (x sequence)
+;;         (when (funcall predicate (funcall key x))
+;;           (return x)))
+;;       (do-sequence (x sequence)
+;;         (when (funcall predicate x)
+;;           (return x)))))
 
 (defun position (elt sequence
                  &key from-end key (test #'eql testp)

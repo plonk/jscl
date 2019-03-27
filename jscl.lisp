@@ -70,6 +70,8 @@
     ("array"         :target)
     ("string"        :target)
     ("sequence"      :target)
+    ("seqmacros"     :both)
+    ("ecl-seq"       :target)
     ("stream"        :target)
     ("hash-table"    :target)
     ("print"         :target)
@@ -79,6 +81,7 @@
     ("package"       :target)
     ("ansiloop"
      ("ansi-loop"    :both))
+    ("seqlib"        :target)
     ("read"          :both)
     ("conditions"    :both)
     ("backquote"     :both)
